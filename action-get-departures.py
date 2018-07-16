@@ -5,7 +5,6 @@ import ConfigParser
 import kvvliveapi as kvv
 import math
 from datetime import datetime
-from kvvliveapi import Depatures
 from hermes_python.hermes import Hermes
 from hermes_python.ontology import *
 import io
@@ -41,25 +40,32 @@ def action_wrapper(hermes, intentMessage, conf):
     - conf : a dictionary that holds the skills parameters you defined
     Refer to the documentation for further details.
     """
-    station_name = str(intentMessage.slots.firstTerm.first().value)
-    if not station_name:
-        station_name = "Büchig"
+    station_name = str(intentMessage.slots.station_name.first().value)
     station_id = 'de:8212:3013'
+    if station_name.lower() is not "büchig":
+        search_result = kvv.search_by_name(station_name)
+	    station_id = search_result[0].stop_id
+        station_name = search_result[0].name
+
     next_departures = kvv.get_departures(station_id, 4)
+    
+    result_sentence = ""
 
-    result_sentence = "Die nächsten Abfahrten ab {} sind: ".format(station_name)
-
-    for dep in next_departures:
-        time_delta = math.floor(((dep.time - datetime.now()).total_seconds() / 60))
-        if time_delta > 0:
-            temp_sentence = "{} in {} Minuten in Richtung {}. ".format(dep.route, time_delta, dep.destination)
-        else:
-            temp_sentence = "{} jetzt in Richtung {}. ".format(dep.route, dep.destination)
-        result_sentence += temp_sentence
+    if len(next_departures) is 0:
+	    result_sentence += "Es wurden keine Abfahrten für {} gefunden.".format(station_name)
+    else:
+	    result_sentence += "Die nächsten Abfahrten ab {} sind: ".format(station_name)
+        for dep in next_departures:
+            time_delta = math.floor(((dep.time - datetime.now()).total_seconds() / 60))
+            temp_sentence = ""
+            if time_delta > 0:
+                temp_sentence = "Linie {} in {} Minuten in Richtung {}. ".format(dep.route, time_delta, dep.destination)
+            else:
+                temp_sentence = "Linie {} jetzt in Richtung {}. ".format(dep.route, dep.destination)
+            result_sentence += temp_sentence
 
     current_session_id = intentMessage.session_id
     hermes.publish_end_session(current_session_id, result_sentence)
-
 
 if __name__ == "__main__":
     with Hermes("localhost:1883") as h:
