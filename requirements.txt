@@ -1,0 +1,4 @@
+# Bindings for the kkv live api
+kvvliveapi>=0.1.0
+# Bindings for the hermes protocol
+hermes-python>=0.1
