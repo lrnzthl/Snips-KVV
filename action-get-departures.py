@@ -63,5 +63,5 @@ def action_wrapper(hermes, intentMessage, conf):
 
 if __name__ == "__main__":
     with Hermes("localhost:1883") as h:
-        h.subscribe_intent("domi:getAddition", subscribe_intent_callback) \
+        h.subscribe_intent("simfire:getKVVNextDepartures", subscribe_intent_callback) \
 .start()
