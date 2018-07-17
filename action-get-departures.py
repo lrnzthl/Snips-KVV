@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import sys
-sys.path.append("venv/bin")
+sys.path.append("venv/local/bin")
 
 import ConfigParser
 import kvvliveapi as kvv
