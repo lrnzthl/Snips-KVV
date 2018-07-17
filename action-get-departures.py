@@ -1,9 +1,11 @@
 #!/usr/bin/env python2
 # -*- coding: utf-8 -*-
 
+import sys
+sys.path.append("venv/bin")
+
 import ConfigParser
 import kvvliveapi as kvv
-import math
 from datetime import datetime
 from hermes_python.hermes import Hermes
 from hermes_python.ontology import *
@@ -44,24 +46,24 @@ def action_wrapper(hermes, intentMessage, conf):
     station_id = 'de:8212:3013'
     if station_name.lower() is not "büchig":
         search_result = kvv.search_by_name(station_name)
-	    station_id = search_result[0].stop_id
-        station_name = search_result[0].name
+        station_id = search_result[0].stop_id.encode("utf8")
+        station_name = search_result[0].name.encode("utf8")
 
     next_departures = kvv.get_departures(station_id, 4)
     
     result_sentence = ""
 
     if len(next_departures) is 0:
-	    result_sentence += "Es wurden keine Abfahrten für {} gefunden.".format(station_name)
+        result_sentence += "Es wurden keine Abfahrten für {} gefunden.".format(station_name)
     else:
-	    result_sentence += "Die nächsten Abfahrten ab {} sind: ".format(station_name)
+        result_sentence += "Die nächsten Abfahrten ab {} sind: ".format(station_name)
         for dep in next_departures:
             time_delta = math.floor(((dep.time - datetime.now()).total_seconds() / 60))
             temp_sentence = ""
             if time_delta > 0:
-                temp_sentence = "Linie {} in {} Minuten in Richtung {}. ".format(dep.route, time_delta, dep.destination)
+                temp_sentence = "Linie {} in {} Minuten in Richtung {}. ".format(dep.route.encode("utf8"), str(time_delta).split('.')[0], dep.destination.encode("utf8"))
             else:
-                temp_sentence = "Linie {} jetzt in Richtung {}. ".format(dep.route, dep.destination)
+                temp_sentence = "Linie {} fährt jetzt in Richtung {}. ".format(dep.route.encode("utf8"), dep.destination.encode("utf8"))
             result_sentence += temp_sentence
 
     current_session_id = intentMessage.session_id
