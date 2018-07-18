@@ -6,6 +6,7 @@ sys.path.append("venv/local/bin")
 
 import ConfigParser
 import kvvliveapi as kvv
+import difflib
 from datetime import datetime
 from hermes_python.hermes import Hermes
 from hermes_python.ontology import *
@@ -33,6 +34,20 @@ def subscribe_intent_callback(hermes, intentMessage):
     conf = read_configuration_file(CONFIG_INI)
     action_wrapper(hermes, intentMessage, conf)
 
+def _search_for_station_id(station_name):
+    result_id = -1
+    result_list = kvv.search_by_name(station_name)
+    name_list = [x.name.encode("utf8") for x in result_list]
+    if "karlsruhe" not in station_name.lower():
+        station_name = "Karlsruhe " + station_name
+    result = difflib.get_close_matches(station_name, name_list, 1)
+    if len(result) > 0:
+        result_station_name = result[0]
+        result_id = [[x.stop_id for x in result_list if x.name.encode("utf8") == result_station_name][0], result_station_name]
+    else:
+        if len(result_list) > 0:
+            result_id = result_list[0].stop_id
+    return result_id
 
 def action_wrapper(hermes, intentMessage, conf):
     """ Write the body of the function that will be executed once the intent is recognized.
@@ -42,15 +57,21 @@ def action_wrapper(hermes, intentMessage, conf):
     - conf : a dictionary that holds the skills parameters you defined
     Refer to the documentation for further details.
     """
-    station_name = str(intentMessage.slots.station_name.first().value)
-    station_id = 'de:8212:3013'
-    if station_name.lower() is not "büchig":
-        search_result = kvv.search_by_name(station_name)
-        station_id = search_result[0].stop_id.encode("utf8")
-        station_name = search_result[0].name.encode("utf8")
+    station_name = "büchig"
+    try:
+        station_name = str(intentMessage.slots.station_name.first().value)
+    except:
+        pass
 
-    next_departures = kvv.get_departures(station_id, 4)
-    
+    next_departures = []
+    station_id = 'de:8212:3013'
+
+    if station_name != "büchig":
+        search_result = _search_for_station_id(station_name)
+        if search_result is not -1:
+            station_name, station_id = search_result
+            next_departures = kvv.get_departures(station_id, 4)
+
     result_sentence = ""
 
     if len(next_departures) is 0:
