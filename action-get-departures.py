@@ -97,7 +97,7 @@ def action_wrapper(hermes, intentMessage, conf):
     search_result = _search_for_station_id(station_name)
 
     if search_result is not -1:
-        station_name, station_id = search_result
+        station_id, station_name = search_result
         next_departures = kvv.get_departures(station_id, 4)
 
     current_session_id = intentMessage.session_id
